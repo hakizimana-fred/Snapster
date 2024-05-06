@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"time"
 )
 
@@ -24,7 +25,7 @@ func main() {
 		Age:   25,
 		Email: "hakifred20@gmail.com",
 	}
-	_, err := snapShooter(data)
+	snapshot, err := snapShooter(data)
 
 	if err != nil {
 		return
@@ -34,7 +35,23 @@ func main() {
 	data.Name = "Haki"
 	data.Age = 30
 
-	fmt.Println("data", data.Name)
+	snapShooter(data)
+	//restore
+	err = restoreSnap(snapshot, data)
+
+	if err != nil {
+		return
+	}
+
+	restored, err := json.Marshal(data)
+	if err != nil {
+		slog.Error("Something went wrong", err)
+	}
+	err = ioutil.WriteFile("restored.json", restored, 0644)
+	if err != nil {
+		fmt.Println("Could not restore")
+	}
+	fmt.Printf("Restored data: %+v\n", data)
 }
 
 func snapShooter(data *Data) ([]byte, error) {
@@ -47,4 +64,12 @@ func snapShooter(data *Data) ([]byte, error) {
 		return nil, err
 	}
 	return snapShot, nil
+}
+
+func restoreSnap(snapshot []byte, data *Data) error {
+	err := json.Unmarshal(snapshot, data)
+	if err != nil {
+		return err
+	}
+	return nil
 }
